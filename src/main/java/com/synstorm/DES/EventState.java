@@ -4,5 +4,6 @@ public enum EventState {
     Waiting,
     WaitingInQueue,
     Active,
-    Postponed
+    Postponed,
+    Ready
 }

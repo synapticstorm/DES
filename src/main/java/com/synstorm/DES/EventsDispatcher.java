@@ -30,7 +30,7 @@ public class EventsDispatcher {
         return currentTick;
     }
 
-    public void addEvents(ModelEvent[] modelEvents) {
+    public void addEvents(final ModelEvent[] modelEvents) {
         final Map<Long, List<ModelEvent>> groupedEvents = Arrays.stream(modelEvents)
                 .parallel()
                 .filter(this::addEvent)
@@ -49,12 +49,6 @@ public class EventsDispatcher {
                     eventsDic.putIfAbsent(e.getKey(), new ArrayList<>());
                     eventsDic.get(e.getKey()).addAll(e.getValue());
                 });
-    }
-
-    public void disruptEvents(ModelEvent[] eventsReferences) {
-        Arrays.stream(eventsReferences)
-                .parallel()
-                .forEach(this::disruptEvent);
     }
 
     @NotNull
@@ -80,7 +74,7 @@ public class EventsDispatcher {
 
     //region Private Methods
     private boolean addEvent(@NotNull final ModelEvent event) {
-        if (event.isWaiting()) {
+        if (event.isReady()) {
             event.updateEvent(currentTick);
         } else if (event.isWaitingInQueue()) {
             event.postponeEvent(currentTick);
@@ -89,12 +83,6 @@ public class EventsDispatcher {
         }
 
         return true;
-    }
-
-    private void disruptEvent(@NotNull final ModelEvent event) {
-        if (event.isActive() || event.isPostponed()) {
-            event.inactivateEventInQueue();
-        }
     }
     //endregion
 }

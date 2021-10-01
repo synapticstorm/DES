@@ -12,7 +12,7 @@ public class ModelEvent {
     private long postponeTime;
     private final int eventDelay;
     private final IEventReference eventReference;
-    private final Object[] eventArguments;
+    private final IModelObject eventObject;
     private EventState eventState;
 
     private final EnumMap<EventState, StateProcessor> stateProcessorMap;
@@ -22,7 +22,7 @@ public class ModelEvent {
     private static final IEventResponse emptyResponse = new EmptyResponse();
 
     //region Constructors
-    public ModelEvent(final IEventReference reference, final Object[] arguments, final int duration, final int delay) {
+    public ModelEvent(final IEventReference reference, final IModelObject object, final int duration, final int delay) {
         id = incrementId();
         eventTime = 0;
         postponeTime = 0;
@@ -30,7 +30,7 @@ public class ModelEvent {
         eventDelay = delay;
         eventState = EventState.Waiting;
         eventReference = reference;
-        eventArguments = arguments;
+        eventObject = object;
 
         stateProcessorMap = new EnumMap<>(EventState.class);
         stateProcessorMap.put(EventState.Active, this::processActiveEvent);
@@ -48,6 +48,11 @@ public class ModelEvent {
     @Contract(pure = true)
     public long getEventTime() {
         return eventTime;
+    }
+
+    @Contract(pure = true)
+    public boolean isReady() {
+        return eventState == EventState.Ready;
     }
 
     @Contract(pure = true)
@@ -84,8 +89,16 @@ public class ModelEvent {
         eventState = EventState.Postponed;
     }
 
-    public void inactivateEventInQueue() {
-        eventState = EventState.WaitingInQueue;
+    public void prepareEvent() {
+        if (isWaiting())
+            eventState = EventState.Ready;
+    }
+
+    public void disruptEvent() {
+        if (isActive() || isPostponed())
+            eventState = EventState.WaitingInQueue;
+        else if (isReady())
+            eventState = EventState.Waiting;
     }
 
     @Override
@@ -97,7 +110,7 @@ public class ModelEvent {
 
     protected IEventResponse processActiveEvent() {
         eventState = EventState.Waiting;
-        return eventReference.execute(eventArguments);
+        return eventReference.execute(eventObject, eventTime);
     }
 
     private IEventResponse processPostponedEvent() {

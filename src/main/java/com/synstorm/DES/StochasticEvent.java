@@ -13,8 +13,8 @@ public class StochasticEvent extends ModelEvent {
     private static double rangePercent = 0.1;
 
     //region Constructors
-    public StochasticEvent(IEventReference reference, Object[] arguments, int duration, int delay, long seed) {
-        super(reference, arguments, duration, delay);
+    public StochasticEvent(final IEventReference reference, final IModelObject object, final int duration, final int delay, final long seed) {
+        super(reference, object, duration, delay);
         rnd = new Random(initialSeed + seed);
         deltaRange = duration * rangePercent;
     }
