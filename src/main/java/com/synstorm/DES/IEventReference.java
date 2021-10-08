@@ -1,6 +1,6 @@
 package com.synstorm.DES;
 
 @FunctionalInterface
-public interface IEventReference {
-    IEventResponse execute(final IModelObject object, final long time);
+public interface IEventReference<T extends IModelObject> {
+    IEventResponse execute(final T object, final long time);
 }

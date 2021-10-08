@@ -134,7 +134,7 @@ public class CyclicEventsDispatcherTest {
     }
 
     @Test
-    public void twoEventsAtZeroDifferentLengthSameEndBothDdelayed () {
+    public void twoEventsAtZeroDifferentLengthSameEndBothDelayed () {
 
         List<EventDispatcherTestStep> testScript = new ArrayList<EventDispatcherTestStep>(){{
             add(new EventDispatcherTestStep(0, 0, new int[][] { {5, 5}, {6, 4} }));

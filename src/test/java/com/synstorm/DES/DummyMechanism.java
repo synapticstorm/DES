@@ -16,18 +16,13 @@ public class DummyMechanism {
     //endregion
 
     //region Public Methods
-    public ModelEvent createModelEvent() {
-        return new ModelEvent(this::evaluate, new IModelObject() {
-            @Override
-            public int hashCode() {
-                return super.hashCode();
-            }
-        }, duration, delay);
+    public ModelEvent<DummyObject> createModelEvent() {
+        return new ModelEvent<>(this::evaluate, new DummyObject(), duration, delay);
     }
     //endregion
 
     //region Private Methods
-    private IEventResponse evaluate(final @NotNull IModelObject object, final long time) {
+    private IEventResponse evaluate(final @NotNull DummyObject object, final long time) {
         System.out.println("Event with duration: " + duration);
         return new DummyResponse();
     }

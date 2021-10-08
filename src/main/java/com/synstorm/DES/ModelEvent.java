@@ -4,15 +4,15 @@ import org.jetbrains.annotations.Contract;
 
 import java.util.EnumMap;
 
-public class ModelEvent {
+public class ModelEvent<M extends IModelObject> {
     //region Fields
     private final long id;
     private final int eventDuration;
     private long eventTime;
     private long postponeTime;
     private final int eventDelay;
-    private final IEventReference eventReference;
-    private final IModelObject eventObject;
+    private final IEventReference<M> eventReference;
+    private final M eventObject;
     private EventState eventState;
 
     private final EnumMap<EventState, StateProcessor> stateProcessorMap;
@@ -22,7 +22,7 @@ public class ModelEvent {
     private static final IEventResponse emptyResponse = new EmptyResponse();
 
     //region Constructors
-    public ModelEvent(final IEventReference reference, final IModelObject object, final int duration, final int delay) {
+    public ModelEvent(final IEventReference<M> reference, final M object, final int duration, final int delay) {
         id = incrementId();
         eventTime = 0;
         postponeTime = 0;
