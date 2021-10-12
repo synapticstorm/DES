@@ -22,7 +22,7 @@ public class DummyMechanism {
     //endregion
 
     //region Private Methods
-    private IEventResponse evaluate(final @NotNull DummyObject object, final long time) {
+    private EventResponse evaluate(final @NotNull DummyObject object, final long time) {
         System.out.println("Event with duration: " + duration);
         return new DummyResponse();
     }

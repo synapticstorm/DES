@@ -2,43 +2,43 @@ package com.synstorm.DES;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class CyclicEventsDispatcher extends EventsDispatcher {
-    //region Fields
-    //endregion
+public class CyclicEventsDispatcher<M extends ModelObject> extends EventsDispatcher<M> {
 
-    //region Constructors
     public CyclicEventsDispatcher() {
         super();
     }
-    //endregion
 
-    //region Public Methods
     @NotNull
-    public IEventResponse[] calculateNextTick() {
+    @SuppressWarnings("unchecked")
+    public EventResponse[] calculateNextTick() {
+        if (eventTime.isEmpty())
+            return emptyAnswer;
+
         currentTick = eventTime.remove();
         uniqueTime.remove(currentTick);
 
-        final List<ModelEvent> currentEvents = Optional.ofNullable(eventsDic.remove(currentTick))
+        final List<ModelEvent<M>> currentEvents = Optional.ofNullable(eventsDic.remove(currentTick))
                 .stream()
                 .flatMap(Collection::parallelStream)
                 .collect(Collectors.toList());
 
-        final ModelEvent[] active = currentEvents.parallelStream()
+        final ModelEvent<M>[] active = currentEvents.parallelStream()
                 .filter(ModelEvent::isActive)
-                .toArray(ModelEvent[]::new);
+                .toArray(size -> (ModelEvent<M>[]) new ModelEvent[size]);
 
-        final IEventResponse[] result = currentEvents.parallelStream()
+        final EventResponse[] result = currentEvents.parallelStream()
                 .map(ModelEvent::executeEvent)
                 .filter(r -> !(r instanceof EmptyResponse))
-                .toArray(IEventResponse[]::new);
+                .toArray(EventResponse[]::new);
 
         if (active.length > 0)
             addEvents(active);
 
         return result;
     }
-    //endregion
 }

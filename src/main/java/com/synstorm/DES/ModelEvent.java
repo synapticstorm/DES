@@ -4,26 +4,21 @@ import org.jetbrains.annotations.Contract;
 
 import java.util.EnumMap;
 
-public class ModelEvent<M extends IModelObject> {
+public class ModelEvent<M extends ModelObject> {
     //region Fields
-    private final long id;
     private final int eventDuration;
     private long eventTime;
     private long postponeTime;
     private final int eventDelay;
-    private final IEventReference<M> eventReference;
+    private final EventReference<M> eventReference;
     private final M eventObject;
     private EventState eventState;
 
     private final EnumMap<EventState, StateProcessor> stateProcessorMap;
     //endregion
 
-    private static long modelActionIdCounter = 0;
-    private static final IEventResponse emptyResponse = new EmptyResponse();
-
     //region Constructors
-    public ModelEvent(final IEventReference<M> reference, final M object, final int duration, final int delay) {
-        id = incrementId();
+    public ModelEvent(final EventReference<M> reference, final M object, final int duration, final int delay) {
         eventTime = 0;
         postponeTime = 0;
         eventDuration = duration;
@@ -39,10 +34,6 @@ public class ModelEvent<M extends IModelObject> {
         stateProcessorMap.put(EventState.Waiting, this::processWaitingEvent);
     }
     //endregion
-
-    private static long incrementId() {
-        return ++modelActionIdCounter;
-    }
 
     //region Public Methods
     @Contract(pure = true)
@@ -75,7 +66,7 @@ public class ModelEvent<M extends IModelObject> {
         return eventState == EventState.Postponed;
     }
 
-    public IEventResponse executeEvent() {
+    public EventResponse executeEvent() {
         return stateProcessorMap.get(eventState).process();
     }
 
@@ -100,36 +91,30 @@ public class ModelEvent<M extends IModelObject> {
         else if (isReady())
             eventState = EventState.Waiting;
     }
-
-    @Override
-    @Contract(pure = true)
-    public int hashCode() {
-        return (int)(id ^ (id >>> 32));
-    }
     //endregion
 
-    protected IEventResponse processActiveEvent() {
+    protected EventResponse processActiveEvent() {
         eventState = EventState.Waiting;
         return eventReference.execute(eventObject, eventTime);
     }
 
-    private IEventResponse processPostponedEvent() {
+    private EventResponse processPostponedEvent() {
         eventTime = postponeTime;
         eventState = EventState.Active;
-        return emptyResponse;
+        return EmptyResponse.INSTANCE;
     }
 
-    private IEventResponse processWaitingInQueueEvent() {
+    private EventResponse processWaitingInQueueEvent() {
         eventState = EventState.Waiting;
-        return emptyResponse;
+        return EmptyResponse.INSTANCE;
     }
 
-    private IEventResponse processWaitingEvent() {
-        return emptyResponse;
+    private EventResponse processWaitingEvent() {
+        return EmptyResponse.INSTANCE;
     }
 
     @FunctionalInterface
     private interface StateProcessor {
-        IEventResponse process();
+        EventResponse process();
     }
 }

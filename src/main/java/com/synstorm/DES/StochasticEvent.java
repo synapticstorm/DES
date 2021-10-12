@@ -2,7 +2,7 @@ package com.synstorm.DES;
 
 import java.util.Random;
 
-public class StochasticEvent<M extends IModelObject> extends ModelEvent<M> {
+public class StochasticEvent<M extends ModelObject> extends ModelEvent<M> {
     //region Fields
     private final Random rnd;
     private final double deltaRange;
@@ -13,7 +13,7 @@ public class StochasticEvent<M extends IModelObject> extends ModelEvent<M> {
     private static double rangePercent = 0.1;
 
     //region Constructors
-    public StochasticEvent(final IEventReference<M> reference, final M object, final int duration, final int delay, final long seed) {
+    public StochasticEvent(final EventReference<M> reference, final M object, final int duration, final int delay, final long seed) {
         super(reference, object, duration, delay);
         rnd = new Random(initialSeed + seed);
         deltaRange = duration * rangePercent;

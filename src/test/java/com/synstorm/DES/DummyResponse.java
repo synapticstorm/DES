@@ -1,6 +1,6 @@
 package com.synstorm.DES;
 
-public class DummyResponse implements IEventResponse {
+public class DummyResponse implements EventResponse {
     //region Fields
     //endregion
 

@@ -30,24 +30,27 @@ public class EventDispatcherTestStep {
         this.add = modelEvents(add);
     }
 
+    @SuppressWarnings("unchecked")
     public EventDispatcherTestStep(int tick, int answers) {
         this.tick = tick;
         this.answers = answers;
 
-        this.add = new ModelEvent[] { };
+        this.add = (ModelEvent<DummyObject>[]) new ModelEvent[]{};
     }
 
-    private ModelEvent[] modelEvents(int[] durations) {
-        final ModelEvent[] events = new ModelEvent[durations.length];
+    @SuppressWarnings("unchecked")
+    private ModelEvent<DummyObject>[] modelEvents(int[] durations) {
+        final ModelEvent<DummyObject>[] events = (ModelEvent<DummyObject>[]) new ModelEvent[durations.length];
         for (int i = 0; i < durations.length; i++) {
-            events[i] = new DummyMechanism(durations[i],0).createModelEvent();
+            events[i] = new DummyMechanism(durations[i], 0).createModelEvent();
             events[i].prepareEvent();
         }
         return events;
     }
 
-    private ModelEvent[] modelEvents(int[][] durations) {
-        final ModelEvent[] events = new ModelEvent[durations.length];
+    @SuppressWarnings("unchecked")
+    private ModelEvent<DummyObject>[] modelEvents(int[][] durations) {
+        final ModelEvent<DummyObject>[] events = (ModelEvent<DummyObject>[]) new ModelEvent[durations.length];
         for (int i = 0; i < durations.length; i++) {
             events[i] = new DummyMechanism(durations[i][0], durations[i][1]).createModelEvent();
             events[i].prepareEvent();
@@ -55,14 +58,14 @@ public class EventDispatcherTestStep {
         return events;
     }
 
-    public static void runTestScript (EventsDispatcher ed, List<EventDispatcherTestStep> steps) {
-        IEventResponse[] response = new IEventResponse[]{ };
+    public static void runTestScript(EventsDispatcher<DummyObject> ed, List<EventDispatcherTestStep> steps) {
+        EventResponse[] response = new EventResponse[]{};
         int testStepNumber = 1;
         for (EventDispatcherTestStep step : steps
         ) {
             long currentTick = ed.getCurrentTick();
-            assertEquals("Incorrect tick at step "+testStepNumber, step.tick, currentTick);
-            assertEquals("Incorrect number of answers at step "+testStepNumber, step.answers, response.length);
+            assertEquals("Incorrect tick at step " + testStepNumber, step.tick, currentTick);
+            assertEquals("Incorrect number of answers at step " + testStepNumber, step.answers, response.length);
             ed.addEvents(step.add);
 
             if (testStepNumber < steps.size()) {
