@@ -7,15 +7,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-public class EventsDispatcher<M extends ModelObject> {
+public final class EventsDispatcher<M extends ModelObject> {
 
-    protected long currentTick;
-    protected final ConcurrentHashMap<Long, List<ModelEvent<M>>> eventsDic;
+    private long currentTick;
+    private final ConcurrentHashMap<Long, List<ModelEvent<M>>> eventsDic;
+    private final TLongHashSet uniqueTime;
+    private final Queue<Long> eventTime;
 
-    protected final TLongHashSet uniqueTime;
-    protected final Queue<Long> eventTime;
-
-    protected EventResponse[] emptyAnswer = new EventResponse[0];
+    private static final EventResponse[] emptyAnswer = new EventResponse[0];
 
     public EventsDispatcher() {
         currentTick = 0;
