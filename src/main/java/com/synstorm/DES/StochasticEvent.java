@@ -28,8 +28,8 @@ public class StochasticEvent<M extends ModelObject> extends ModelEvent<M> {
     //endregion
 
     //region Public Methods
-    public void updateEvent(final long tick) {
-        super.updateEvent(tick + calcDelta());
+    public boolean updateTime(final long tick) {
+        return super.updateTime(tick + calcDelta());
     }
     //endregion
 

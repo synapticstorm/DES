@@ -1,51 +1,52 @@
 package com.synstorm.DES;
 
-import gnu.trove.set.hash.TLongHashSet;
+import gnu.trove.map.hash.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
 import java.util.stream.Collectors;
 
 public final class EventsDispatcher<M extends ModelObject> {
 
     private long currentTick;
-    private final ConcurrentHashMap<Long, List<ModelEvent<M>>> eventsDic;
-    private final TLongHashSet uniqueTime;
-    private final Queue<Long> eventTime;
+    private final TLongObjectHashMap<ModelEvent<M>[]> eventsDic;
+    private final PriorityQueue<Long> eventTime;
 
     private static final EventResponse[] emptyAnswer = new EventResponse[0];
 
     public EventsDispatcher() {
         currentTick = 0;
         eventTime = new PriorityQueue<>();
-        uniqueTime = new TLongHashSet();
-        eventsDic = new ConcurrentHashMap<>();
+        eventsDic = new TLongObjectHashMap<>();
     }
 
     public long getCurrentTick() {
         return currentTick;
     }
 
+    @SuppressWarnings("unchecked")
     public void addEvents(final ModelEvent<M>[] modelEvents) {
         final Map<Long, List<ModelEvent<M>>> groupedEvents = Arrays.stream(modelEvents)
                 .parallel()
-                .filter(this::addEvent)
+                .filter(e -> e.updateTime(currentTick))
                 .collect(Collectors.groupingBy(ModelEvent::getEventTime));
 
-        final List<Long> ticks = groupedEvents.keySet()
-                .parallelStream()
-                .filter(tick -> !uniqueTime.contains(tick))
-                .collect(Collectors.toList());
-
-        eventTime.addAll(ticks);
-        uniqueTime.addAll(ticks);
-
-        groupedEvents.entrySet().parallelStream()
-                .forEach(e -> {
-                    eventsDic.putIfAbsent(e.getKey(), new ArrayList<>());
-                    eventsDic.get(e.getKey()).addAll(e.getValue());
-                });
+        groupedEvents.forEach((tick, events) -> {
+            final ModelEvent<M>[] add = (ModelEvent<M>[]) events.toArray(ModelEvent[]::new);
+            if (eventsDic.containsKey(tick)) {
+                final ModelEvent<M>[] src = eventsDic.get(tick);
+                final ModelEvent<M>[] dst = (ModelEvent<M>[]) new ModelEvent[src.length + add.length];
+                System.arraycopy(src, 0, dst, 0, src.length);
+                System.arraycopy(add, 0, dst, src.length, add.length);
+                eventsDic.put(tick, dst);
+            } else {
+                eventTime.add(tick);
+                eventsDic.put(tick, add);
+            }
+        });
     }
 
     @NotNull
@@ -54,32 +55,16 @@ public final class EventsDispatcher<M extends ModelObject> {
             return emptyAnswer;
 
         currentTick = eventTime.remove();
-        uniqueTime.remove(currentTick);
+        final ModelEvent<M>[] currentEvents = eventsDic.remove(currentTick);
 
-        final List<ModelEvent<M>> currentEvents = Optional.ofNullable(eventsDic.remove(currentTick))
-                .stream()
-                .flatMap(Collection::parallelStream)
-                .collect(Collectors.toList());
-
-        return currentEvents.parallelStream()
+        return Arrays.stream(currentEvents)
+                .parallel()
                 .map(ModelEvent::executeEvent)
-                .filter(r -> r != EmptyResponse.INSTANCE)
+                .filter(EventResponse::notEmpty)
                 .toArray(EventResponse[]::new);
     }
 
     public long peekHead() {
         return eventTime.peek() != null ? eventTime.peek() : Long.MAX_VALUE;
-    }
-
-    private boolean addEvent(@NotNull final ModelEvent<M> event) {
-        if (event.isReady()) {
-            event.updateEvent(currentTick);
-        } else if (event.isWaitingInQueue()) {
-            event.postponeEvent(currentTick);
-        } else {
-            return false;
-        }
-
-        return true;
     }
 }

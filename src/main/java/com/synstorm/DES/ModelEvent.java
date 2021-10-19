@@ -31,7 +31,6 @@ public class ModelEvent<M extends ModelObject> {
         stateProcessorMap.put(EventState.Active, this::processActiveEvent);
         stateProcessorMap.put(EventState.Postponed, this::processPostponedEvent);
         stateProcessorMap.put(EventState.WaitingInQueue, this::processWaitingInQueueEvent);
-        stateProcessorMap.put(EventState.Waiting, this::processWaitingEvent);
     }
     //endregion
 
@@ -70,14 +69,19 @@ public class ModelEvent<M extends ModelObject> {
         return stateProcessorMap.get(eventState).process();
     }
 
-    public void updateEvent(final long tick) {
-        eventTime = tick + eventDelay + eventDuration;
-        eventState = EventState.Active;
-    }
+    public boolean updateTime(final long tick) {
+        boolean result = true;
+        if (isReady()) {
+            eventTime = tick + eventDelay + eventDuration;
+            eventState = EventState.Active;
+        } else if (isWaitingInQueue()) {
+            postponeTime = tick + eventDuration;
+            eventState = EventState.Postponed;
+        } else {
+            result = false;
+        }
 
-    public void postponeEvent(final long tick) {
-        postponeTime = tick + eventDuration;
-        eventState = EventState.Postponed;
+        return result;
     }
 
     public void prepareEvent() {
@@ -93,7 +97,7 @@ public class ModelEvent<M extends ModelObject> {
     }
     //endregion
 
-    protected EventResponse processActiveEvent() {
+    private EventResponse processActiveEvent() {
         eventState = EventState.Waiting;
         return eventReference.execute(eventObject, eventTime);
     }
@@ -106,10 +110,6 @@ public class ModelEvent<M extends ModelObject> {
 
     private EventResponse processWaitingInQueueEvent() {
         eventState = EventState.Waiting;
-        return EmptyResponse.INSTANCE;
-    }
-
-    private EventResponse processWaitingEvent() {
         return EmptyResponse.INSTANCE;
     }
 
